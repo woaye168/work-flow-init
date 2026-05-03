@@ -67,27 +67,29 @@ export LC_ALL=zh_CN.UTF-8
 export LANGUAGE=zh_CN:zh
 
 ###############################################################################
-# 5. 安装 Oh My Zsh
+# 5. 安装 Oh My Zsh（使用国内代理加速）
 ###############################################################################
 info "安装 Oh My Zsh..."
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+GH_PROXY="https://ghproxy.com/"
+
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    git clone --depth=1 "${GH_PROXY}https://github.com/ohmyzsh/ohmyzsh.git" "$HOME/.oh-my-zsh"
 else
     warn "Oh My Zsh 已存在，跳过安装"
 fi
 
 ###############################################################################
-# 6. 安装 Zsh 插件
+# 6. 安装 Zsh 插件（使用国内代理加速）
 ###############################################################################
 info "安装 Zsh 插件..."
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 
 if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    git clone --depth=1 "${GH_PROXY}https://github.com/zsh-users/zsh-autosuggestions.git" "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
 fi
 
 if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    git clone --depth=1 "${GH_PROXY}https://github.com/zsh-users/zsh-syntax-highlighting.git" "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 fi
 
 ###############################################################################
