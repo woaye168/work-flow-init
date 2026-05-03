@@ -13,19 +13,19 @@
 ## 一键使用
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/你的用户名/你的仓库名/main/init-debian-13.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/woaye168/work-flow-init/main/init-debian-13.sh)"
 ```
 
 或使用 `wget`：
 
 ```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/你的用户名/你的仓库名/main/init-debian-13.sh)"
+bash -c "$(wget -qO- https://raw.githubusercontent.com/woaye168/work-flow-init/main/init-debian-13.sh)"
 ```
 
 ## 手动使用
 
 ```bash
-git clone https://github.com/你的用户名/你的仓库名.git
+git clone https://github.com/woaye168/work-flow-init.git
 cd 你的仓库名
 bash init-debian-13.sh
 ```
