@@ -7,11 +7,24 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_URL="https://github.com/woaye168/work-flow-init.git"
+
+# bash -c 模式下 BASH_SOURCE 不存在，用 pwd 作为回退
+if [ -n "${BASH_SOURCE:-}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR="$(pwd)"
+fi
 
 # 如果不在仓库目录中（curl 方式运行），先 clone 仓库
 if [ ! -f "$SCRIPT_DIR/ansible/playbook.yml" ]; then
+    # 新机器可能没有 git，先安装
+    if ! command -v git &> /dev/null; then
+        echo "[INFO] 安装 git..."
+        apt update
+        apt install -y git
+    fi
+
     echo "[INFO] 下载仓库文件..."
     WORK_DIR="${HOME}/.work-flow-init"
     rm -rf "$WORK_DIR"
