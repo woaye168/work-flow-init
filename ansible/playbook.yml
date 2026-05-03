@@ -213,6 +213,14 @@
       register: timezone_output
       changed_when: false
 
+    - name: 获取公网 IP
+      shell: |
+        curl -fsSL --max-time 3 https://api.ip.sb/ip 2>/dev/null || \
+        curl -fsSL --max-time 3 https://api64.ipify.org 2>/dev/null || \
+        echo ""
+      register: public_ip
+      changed_when: false
+
     - name: 验证 Docker
       command: docker --version
       register: docker_version
@@ -240,11 +248,11 @@
           - "【SSH 连接容器开发指南】"
           - ""
           - "Step 1: 下载私钥到本地电脑"
-          - "   scp root@{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) | default('服务器IP') }}:/root/.ssh/id_ed25519 ~/.ssh/devbox_key"
+          - "   scp root@{{ public_ip.stdout | default(ansible_default_ipv4.address, true) }}:/root/.ssh/id_ed25519 ~/.ssh/devbox_key"
           - "   chmod 600 ~/.ssh/devbox_key"
           - ""
           - "Step 2: 在 IDE 中配置 SSH 连接"
-          - "   Host: {{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) | default('服务器IP') }}"
+          - "   Host: {{ public_ip.stdout | default(ansible_default_ipv4.address, true) }}"
           - "   Port: 36000"
           - "   User: root"
           - "   Auth: SSH Key -> ~/.ssh/devbox_key"
