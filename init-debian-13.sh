@@ -154,7 +154,9 @@ info "Step 7: 配置中文 locale 和时区..."
 
 # 7.1 生成 locale 数据
 info "  - 生成 locale 数据..."
-sudo locale-gen zh_CN.UTF-8 en_US.UTF-8 || warn "locale-gen 部分失败"
+sudo sed -i 's/# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen
+sudo sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+sudo locale-gen || warn "locale-gen 部分失败"
 
 # 7.2 写入系统级默认 locale 配置
 info "  - 写入系统 locale 配置..."
