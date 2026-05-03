@@ -170,6 +170,19 @@
     - name: 启动 Devbox
       shell: docker compose -f "{{ playbook_dir }}/../docker-compose.yml" up -d
 
+    - name: 等待容器启动
+      shell: sleep 3
+      changed_when: false
+
+    - name: 配置容器内 SSH 密钥认证
+      shell: |
+        docker exec devbox mkdir -p /root/.ssh
+        cat "{{ ansible_env.HOME }}/.ssh/id_ed25519.pub" | docker exec -i devbox bash -c 'cat > /root/.ssh/authorized_keys'
+        docker exec devbox chmod 700 /root/.ssh
+        docker exec devbox chmod 600 /root/.ssh/authorized_keys
+        docker exec devbox chown -R root:root /root/.ssh
+      ignore_errors: yes
+
     - name: 安装 Oh My Zsh
       git:
         repo: https://github.com/ohmyzsh/ohmyzsh.git
