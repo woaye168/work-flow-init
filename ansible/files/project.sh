@@ -7,6 +7,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 CONTAINER="devbox"
@@ -18,16 +19,52 @@ if ! command -v gh &>/dev/null; then
     exit 1
 fi
 
-# 检查登录
+# 检查登录，未登录则引导
 if ! gh auth status &>/dev/null; then
-    echo -e "${YELLOW}未登录 GitHub${NC}"
-    echo "请先执行: ${BLUE}gh auth login${NC}"
     echo ""
-    echo "推荐方式:"
-    echo "  1. 选择 'GitHub.com'"
-    echo "  2. 选择 'SSH' 或 'HTTPS'"
-    echo "  3. 选择 'Login with a web browser'，按提示完成授权"
-    exit 1
+    echo "========================================"
+    echo "  GitHub 登录"
+    echo "========================================"
+    echo ""
+    echo "  1) 浏览器授权 (推荐)"
+    echo "     自动打开浏览器，点击授权即可"
+    echo ""
+    echo "  2) 输入 Token"
+    echo "     从 GitHub Settings -> Developer settings"
+    echo "     -> Personal access tokens 获取"
+    echo ""
+    echo "  3) 跳过，稍后手动登录"
+    echo ""
+    read -p "选择登录方式: " auth_choice
+
+    case $auth_choice in
+        1)
+            echo ""
+            echo -e "${CYAN}正在打开浏览器...${NC}"
+            gh auth login --hostname github.com --git-protocol https --web
+            ;;
+        2)
+            echo ""
+            read -s -p "输入 Personal Access Token: " token
+            echo ""
+            echo "$token" | gh auth login --hostname github.com --git-protocol https --with-token
+            ;;
+        3)
+            echo "已跳过，稍后执行 gh auth login 手动登录"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}无效选项${NC}"
+            exit 1
+            ;;
+    esac
+
+    # 再次检查
+    if ! gh auth status &>/dev/null; then
+        echo -e "${RED}登录失败，请重试${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}登录成功${NC}"
 fi
 
 GITHUB_USER=$(gh api user -q .login 2>/dev/null)
