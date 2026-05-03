@@ -19,7 +19,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/woaye168/work-flow-init/
 ```
 
 **过程说明：**
-1. `bootstrap.sh` 自动安装 Ansible
+1. `bootstrap.sh` 自动安装 Ansible（如未安装）
 2. 拉取本仓库到 `~/.work-flow-init`
 3. 运行 Ansible playbook 完成全部初始化
 
@@ -36,31 +36,33 @@ bash bootstrap.sh
 ```
 work-flow-init/
 ├── bootstrap.sh              # 一键入口：安装 Ansible + 运行 playbook
-├── ansible/
-│   ├── playbook.yml          # 主 playbook（定义所有任务）
-│   └── files/                # 配置文件模板
-│       ├── apt-sources.list
-│       ├── default-locale
-│       └── zshrc
 ├── docker-compose.yml        # Devbox 容器配置
-├── configs/                  # 配置文件备份（与 ansible/files 内容一致）
-├── scripts/                  # 原始 Shell 脚本（备选方案）
-│   ├── setup-sources.sh
-│   ├── update-system.sh
-│   ├── install-packages.sh
-│   ├── install-docker.sh
-│   ├── setup-devbox.sh
-│   ├── setup-locale.sh
-│   ├── setup-zsh.sh
-│   └── verify.sh
+├── ansible/
+│   ├── playbook.yml          # 主 playbook（定义所有初始化任务）
+│   └── files/                # 配置文件模板
+│       ├── apt-sources.list  # 腾讯云 Debian 镜像源
+│       ├── default-locale    # 中文 locale 配置
+│       └── zshrc             # zsh + Oh My Zsh 配置
 ├── README.md
+├── CLAUDE.md
 └── .gitattributes
 ```
+
+## 配置定制
+
+所有服务器配置文件都在 `ansible/files/` 下，直接编辑即可：
+
+| 文件 | 作用 | 服务器目标路径 |
+|------|------|---------------|
+| `ansible/files/apt-sources.list` | 软件源配置 | `/etc/apt/sources.list` |
+| `ansible/files/default-locale` | 系统 locale | `/etc/default/locale` |
+| `ansible/files/zshrc` | zsh 配置 | `~/.zshrc` |
+| `docker-compose.yml` | Devbox 容器 | `~/docker-compose.yml` |
 
 ## 环境要求
 
 - Debian 13 (Trixie) 或兼容系统
-- `sudo` 权限（脚本中部分操作需要 root）
+- `sudo` 权限
 - 可访问 `mirrors.cloud.tencent.com`
 
 ## 安装后访问
@@ -75,18 +77,6 @@ work-flow-init/
 - Windows Terminal / PuTTY 用户请确认终端编码为 UTF-8
 - Devbox 容器会自动重启（`restart: unless-stopped`）
 - `~/workspace` 目录会挂载到 Devbox 容器的 `/workspace`
-
-## 备选方案（纯 Shell）
-
-如果不想用 Ansible，可以直接运行原始 Shell 脚本：
-
-```bash
-git clone --depth=1 https://github.com/woaye168/work-flow-init.git
-cd work-flow-init
-bash scripts/setup-sources.sh
-bash scripts/update-system.sh
-# ... 按顺序执行各脚本
-```
 
 ## License
 

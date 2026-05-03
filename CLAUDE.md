@@ -1,32 +1,61 @@
 # CLAUDE.md
-这是个用来给新开的服务器初始化脚本的项目，你需要用中文回复.
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-This repository contains a single Bash script: `init-debian-13.sh`. It is a one-click initialization script for new Debian 13 (Trixie) machines. It automates:
+This repository is an Ansible-based one-click initialization script for Debian 13 (Trixie) servers. It automates:
 
-1. Backing up and replacing `/etc/apt/sources.list` with Tencent Cloud mirrors
-2. Running `apt update` and `apt upgrade -y`
-3. Installing common development tools (build-essential, git, curl, wget, vim, htop, jq, zsh, openssh-server, etc.)
-4. Switching the default shell to zsh via `chsh`
-5. Configuring Chinese locale (`zh_CN.UTF-8`) and timezone (`Asia/Shanghai`)
-6. Verifying the configuration
+1. Configuring Tencent Cloud apt mirrors
+2. System update and upgrade
+3. Installing common development tools
+4. Installing Docker with Tencent Cloud mirror
+5. Starting a Devbox development environment container
+6. Installing Oh My Zsh with plugins
+7. Setting Chinese locale (`zh_CN.UTF-8`) and timezone (`Asia/Shanghai`)
+
+## Architecture
+
+### Entry Point
+
+- `bootstrap.sh` -- One-click entry. Installs Ansible if missing, clones the repo, and runs the playbook.
+- Supports two modes:
+  1. `git clone` + `bash bootstrap.sh` (recommended)
+  2. `bash -c "$(curl -fsSL .../bootstrap.sh)"` (bootstrap auto-clones the repo)
+
+### Ansible Playbook
+
+- `ansible/playbook.yml` -- The main playbook executed by bootstrap.sh. Uses `ansible.builtin` and `community.general` modules.
+- Key modules used:
+  - `apt` / `apt_repository` -- Package management
+  - `locale_gen` / `timezone` -- Locale and timezone
+  - `git` -- Clone Oh My Zsh and plugins
+  - `copy` -- Deploy config files from `ansible/files/`
+  - `service` -- Start Docker
+  - `user` -- Switch default shell to zsh
+
+### Config Templates
+
+- `ansible/files/apt-sources.list` -> `/etc/apt/sources.list`
+- `ansible/files/default-locale` -> `/etc/default/locale`
+- `ansible/files/zshrc` -> `~/.zshrc`
+- `docker-compose.yml` -> `~/docker-compose.yml`
 
 ## Usage
 
-The script is designed to run directly on a Debian 13 system with `sudo` access:
+Run on a Debian 13 system with sudo access:
 
 ```bash
-bash init-debian-13.sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/woaye168/work-flow-init/main/bootstrap.sh)"
 ```
 
-**Requirements:**
+Requirements:
 - Debian 13 (Trixie) or compatible
-- `sudo` privileges (the script uses `sudo` extensively)
-- Internet access to reach `mirrors.cloud.tencent.com`
+- `sudo` privileges
+- Internet access to `mirrors.cloud.tencent.com`
 
-**Notable behaviors:**
-- The script sets `set -euo pipefail` for strict error handling
-- It backs up the original `/etc/apt/sources.list` before overwriting
-- It appends locale settings to `~/.bashrc` idempotently (checks before appending)
-- The zsh shell change requires re-login to take effect
+## Notes
+
+- The playbook is idempotent -- running multiple times is safe.
+- All config files are standalone templates in `ansible/files/` and `docker-compose.yml`.
+- After completion, re-login SSH to use zsh as the default shell.
