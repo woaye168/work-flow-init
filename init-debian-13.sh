@@ -213,7 +213,7 @@ echo ""
 echo "=== 中文显示测试 ==="
 TEST_FILE="/tmp/中文测试_$(date +%s).txt"
 touch "$TEST_FILE"
-ls -la "$TEST_FILE" && rm -f "$TEST_FILE"
+ls --show-control-chars -la "$TEST_FILE" && rm -f "$TEST_FILE"
 
 ###############################################################################
 # 完成
