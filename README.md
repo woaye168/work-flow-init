@@ -65,6 +65,27 @@ work-flow-init/
 │       └── zshrc             # Oh My Zsh 配置
 ```
 
+## 项目管理
+
+一键脚本已安装 `project` 命令，用于交互式管理 GitHub 项目。
+
+### 首次使用
+
+```bash
+# 1. 登录 GitHub（只需一次）
+gh auth login
+
+# 2. 启动项目管理
+project
+```
+
+### 功能
+
+| 选项 | 功能 |
+|------|------|
+| **同步项目** | 列出 GitHub 仓库，选择后自动 clone 到容器 `/workspace` |
+| **新建项目** | 交互输入项目名/描述/私有，同时创建 GitHub 仓库和本地文件夹 |
+
 ## 日常操作
 
 ```bash
@@ -78,6 +99,9 @@ cd /workspace
 docker ps
 docker compose restart devbox
 docker compose logs -f devbox
+
+# 项目管理
+project
 ```
 
 ## 环境要求
