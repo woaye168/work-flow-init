@@ -219,7 +219,7 @@
       changed_when: false
 
     - name: 验证 Devbox
-      shell: docker ps --format '{{ .Names }}' | grep -q '^devbox$'
+      shell: docker ps | grep -q devbox
       register: devbox_running
       changed_when: false
       ignore_errors: yes
@@ -231,7 +231,7 @@
           - "Locale: {{ locale_output.stdout_lines | select('search', 'LANG=') | first | default('未获取') }}"
           - "时区: {{ timezone_output.stdout_lines | select('search', 'Time zone') | first | default('未获取') }}"
           - "Docker: {{ docker_version.stdout }}"
-          - "Devbox: {{ '运行中' if devbox_running.rc == 0 else '未启动' }}"
+          - "Devbox: {{ '运行中' if (devbox_running.rc | default(1)) == 0 else '未启动' }}"
           - ""
           - "========================================"
           - "  初始化完成"
