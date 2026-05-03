@@ -10,6 +10,10 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# 强制 gh 使用中文
+export LANG=zh_CN.UTF-8
+export LC_ALL=zh_CN.UTF-8
+
 CONTAINER="devbox"
 WORKSPACE="/workspace"
 
