@@ -47,10 +47,20 @@
       apt:
         update_cache: yes
 
+    - name: Hold openssh-server（避免升级时 SSH 断连）
+      dpkg_selections:
+        name: openssh-server
+        selection: hold
+
     - name: 升级已安装软件包
       apt:
         upgrade: yes
         dpkg_options: 'force-confdef,force-confold'
+
+    - name: 解除 openssh-server hold
+      dpkg_selections:
+        name: openssh-server
+        selection: install
 
     - name: 安装常用工具
       apt:
