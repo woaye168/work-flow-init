@@ -153,41 +153,16 @@
         path: "{{ ansible_env.HOME }}/workspace"
         state: directory
 
-    - name: 确保 .ssh 目录存在
+    - name: 设置 .ssh 目录权限
       file:
         path: "{{ ansible_env.HOME }}/.ssh"
         state: directory
         mode: '0700'
 
-    - name: 检查是否已有 authorized_keys
-      stat:
-        path: "{{ ansible_env.HOME }}/.ssh/authorized_keys"
-      register: auth_keys_stat
-
-    - name: 生成 SSH key（仅当无现有密钥时）
-      command: ssh-keygen -t ed25519 -f "{{ ansible_env.HOME }}/.ssh/id_ed25519" -N "" -C "devbox@{{ ansible_hostname }}"
-      args:
-        creates: "{{ ansible_env.HOME }}/.ssh/id_ed25519"
-      when: not (auth_keys_stat.stat.exists and auth_keys_stat.stat.size > 0)
-
-    - name: 添加新生成的公钥到 authorized_keys
-      authorized_key:
-        user: "{{ ansible_user_id }}"
-        key: "{{ lookup('file', ansible_env.HOME + '/.ssh/id_ed25519.pub') }}"
-        state: present
-      when: not (auth_keys_stat.stat.exists and auth_keys_stat.stat.size > 0)
-
-    - name: 设置 SSH 文件权限
+    - name: 设置 authorized_keys 权限
       file:
-        path: "{{ item.path }}"
-        mode: "{{ item.mode }}"
-        state: "{{ item.state | default('file') }}"
-      loop:
-        - { path: "{{ ansible_env.HOME }}/.ssh", mode: '0700', state: 'directory' }
-        - { path: "{{ ansible_env.HOME }}/.ssh/authorized_keys", mode: '0644' }
-        - { path: "{{ ansible_env.HOME }}/.ssh/id_ed25519", mode: '0600' }
-        - { path: "{{ ansible_env.HOME }}/.ssh/id_ed25519.pub", mode: '0644' }
-      ignore_errors: yes
+        path: "{{ ansible_env.HOME }}/.ssh/authorized_keys"
+        mode: '0644'
 
     - name: 启动 Devbox
       shell: docker compose -f "{{ playbook_dir }}/../docker-compose.yml" up -d
@@ -196,16 +171,10 @@
       shell: sleep 3
       changed_when: false
 
-    - name: 准备注入容器的公钥文件
-      copy:
-        src: "{{ ansible_env.HOME }}/.ssh/{{ 'authorized_keys' if (auth_keys_stat.stat.exists and auth_keys_stat.stat.size > 0) else 'id_ed25519.pub' }}"
-        dest: /tmp/devbox_authorized_keys
-        remote_src: yes
-
     - name: 配置容器内 SSH 密钥认证
       shell: |
         docker exec devbox mkdir -p /root/.ssh
-        cat /tmp/devbox_authorized_keys | docker exec -i devbox bash -c 'cat > /root/.ssh/authorized_keys'
+        cat "{{ ansible_env.HOME }}/.ssh/authorized_keys" | docker exec -i devbox bash -c 'cat > /root/.ssh/authorized_keys'
         docker exec devbox chmod 700 /root/.ssh
         docker exec devbox chmod 600 /root/.ssh/authorized_keys
         docker exec devbox chown -R root:root /root/.ssh
@@ -283,39 +252,16 @@
     - name: 显示验证结果
       debug:
         msg:
-          - "Shell: {{ zsh_path.stdout }}"
-          - "Locale: {{ locale_output.stdout_lines | select('search', 'LANG=') | first | default('未获取') }}"
-          - "时区: {{ timezone_output.stdout_lines | select('search', 'Time zone') | first | default('未获取') }}"
-          - "Docker: {{ docker_version.stdout }}"
-          - "Devbox: {{ '运行中' if (devbox_running.rc | default(1)) == 0 else '未启动' }}"
-          - ""
           - "========================================"
           - "  初始化完成"
           - "========================================"
           - ""
-          - "【SSH 连接容器开发指南】"
+          - "Shell:   {{ zsh_path.stdout }}"
+          - "Docker:  {{ docker_version.stdout }}"
+          - "Devbox:  {{ '运行中' if (devbox_running.rc | default(1)) == 0 else '未启动' }}"
           - ""
-          - "Host: {{ public_ip.stdout | default(ansible_default_ipv4.address, true) }}"
-          - "Port: 36000"
-          - "User: root"
+          - "容器 SSH: ssh -p 36000 root@{{ public_ip.stdout | default(ansible_default_ipv4.address, true) }}"
           - ""
-          - "{% if auth_keys_stat.stat.exists and auth_keys_stat.stat.size > 0 %}"
-          - "使用已有私钥直接连接容器:"
-          - "   ssh -p 36000 root@{{ public_ip.stdout | default(ansible_default_ipv4.address, true) }}"
+          - "使用登录宿主机的同一套 SSH Key"
           - ""
-          - "IDE 配置使用你登录宿主机的同一套 SSH Key"
-          - "{% else %}"
-          - "Step 1: 下载私钥到本地电脑"
-          - "   scp root@{{ public_ip.stdout | default(ansible_default_ipv4.address, true) }}:/root/.ssh/id_ed25519 ~/.ssh/devbox_key"
-          - "   chmod 600 ~/.ssh/devbox_key"
-          - ""
-          - "Step 2: 在 IDE 中配置 SSH 连接"
-          - "   Auth: SSH Key -> ~/.ssh/devbox_key"
-          - "{% endif %}"
-          - ""
-          - "支持的 IDE: Codebuddy / VSCode (Remote-SSH) / JetBrains Gateway"
-          - ""
-          - "========================================"
-          - ""
-          - "提示: 重新登录 SSH 以使用 zsh + Oh My Zsh"
-          - "      容器内环境崩溃只需 docker compose restart devbox 即可恢复"
+          - "重新登录 SSH 以使用 zsh"
