@@ -31,11 +31,11 @@ if ! gh auth status &>/dev/null; then
     echo "========================================"
     echo ""
     echo "  1) 浏览器授权 (推荐)"
-    echo "     自动打开浏览器，点击授权即可"
+    echo "     获取授权码，在本地浏览器完成登录"
     echo ""
     echo "  2) 输入 Token"
     echo "     从 GitHub Settings -> Developer settings"
-    echo "     -> Personal access tokens 获取"
+    echo "     -> Personal access tokens -> Tokens (classic) 获取"
     echo ""
     echo "  3) 跳过，稍后手动登录"
     echo ""
@@ -44,20 +44,37 @@ if ! gh auth status &>/dev/null; then
     case $auth_choice in
         1)
             echo ""
-            echo -e "${CYAN}正在打开浏览器...${NC}"
-            echo -e "${YELLOW}请在浏览器中点击授权，完成后回到终端${NC}"
+            echo "========================================"
+            echo "  GitHub 设备授权"
+            echo "========================================"
+            echo ""
+            echo "服务器无法直接打开浏览器，请按以下步骤操作："
+            echo ""
+            echo -e "  ${CYAN}1.${NC} 按回车获取授权码"
+            echo -e "  ${CYAN}2.${NC} 复制显示的一串代码（格式：XXXX-XXXX）"
+            echo -e "  ${CYAN}3.${NC} 在本地浏览器打开 ${BLUE}https://github.com/login/device${NC}"
+            echo -e "  ${CYAN}4.${NC} 粘贴代码，点击 Continue -> Authorize github"
+            echo -e "  ${CYAN}5.${NC} 回到终端等待显示完成"
+            echo ""
+            echo -e "${YELLOW}按回车开始获取授权码...${NC}"
+            read
+
+            # 运行 gh auth login，它会显示 code 然后等待授权完成
             gh auth login --hostname github.com --git-protocol https --web
             ;;
+
         2)
             echo ""
             read -s -p "输入 Personal Access Token: " token
             echo ""
             echo "$token" | gh auth login --hostname github.com --git-protocol https --with-token
             ;;
+
         3)
             echo "已跳过，稍后执行 gh auth login 手动登录"
             exit 0
             ;;
+
         *)
             echo -e "${RED}无效选项${NC}"
             exit 1
