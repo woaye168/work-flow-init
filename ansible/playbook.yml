@@ -183,6 +183,13 @@
         docker exec devbox chown -R root:root /root/.ssh
       ignore_errors: yes
 
+    - name: 禁用容器内 SSH 密码登录
+      shell: |
+        docker exec devbox sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+        docker exec devbox sed -i 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
+        docker exec devbox service ssh restart
+      ignore_errors: yes
+
     - name: 安装 Oh My Zsh
       git:
         repo: https://github.com/ohmyzsh/ohmyzsh.git
