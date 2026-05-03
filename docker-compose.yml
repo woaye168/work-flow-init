@@ -1,0 +1,13 @@
+# docker-compose.yml
+services:
+  devbox:
+    image: docker.cnb.cool/mintimate/code-nest/cloud-base-devbox/all-in-one:latest
+    container_name: devbox
+    restart: unless-stopped
+    volumes:
+      - /root/.ssh:/tmp/host-ssh:ro
+      - ./workspace:/workspace
+    ports:
+      - 36000:36000
+    tty: true
+    stdin_open: true
