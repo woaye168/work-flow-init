@@ -235,5 +235,5 @@ warn "重要提示："
 echo "  1. 请重新登录 SSH 以使用 zsh 作为默认 shell"
 echo "  2. 如果使用 Windows Terminal / PuTTY，请确认终端编码为 UTF-8"
 echo "  3. 建议安装 Oh My Zsh 增强 zsh 体验："
-echo "     sh -c "\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)""
+echo '     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 echo ""
