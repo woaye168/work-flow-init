@@ -70,22 +70,6 @@
         path: /usr/sbin/policy-rc.d
         state: absent
 
-    - name: 添加 GitHub CLI apt 源
-      shell: |
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-        dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-        chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch={{ dpkg_arch.stdout }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
-        tee /etc/apt/sources.list.d/github-cli.list
-      args:
-        creates: /etc/apt/sources.list.d/github-cli.list
-
-    - name: 安装 GitHub CLI
-      apt:
-        name: gh
-        state: present
-        update_cache: yes
-
     - name: 解除 openssh-server hold
       dpkg_selections:
         name: openssh-server
@@ -138,9 +122,24 @@
         repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.cloud.tencent.com/docker-ce/linux/debian bookworm stable"
         filename: docker
 
-    - name: 更新 apt 缓存（添加 Docker 源后）
+    - name: 添加 GitHub CLI apt 源
+      shell: |
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+        dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch={{ dpkg_arch.stdout }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
+        tee /etc/apt/sources.list.d/github-cli.list
+      args:
+        creates: /etc/apt/sources.list.d/github-cli.list
+
+    - name: 更新 apt 缓存（添加 Docker 和 GitHub 源后）
       apt:
         update_cache: yes
+
+    - name: 安装 GitHub CLI
+      apt:
+        name: gh
+        state: present
 
     - name: 安装 Docker
       apt:
