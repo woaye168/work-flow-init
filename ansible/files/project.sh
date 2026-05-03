@@ -45,6 +45,7 @@ if ! gh auth status &>/dev/null; then
         1)
             echo ""
             echo -e "${CYAN}正在打开浏览器...${NC}"
+            echo -e "${YELLOW}请在浏览器中点击授权，完成后回到终端${NC}"
             gh auth login --hostname github.com --git-protocol https --web
             ;;
         2)
