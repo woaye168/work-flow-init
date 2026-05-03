@@ -99,9 +99,14 @@
       args:
         creates: /etc/apt/keyrings/docker.gpg
 
+    - name: 获取 dpkg 架构
+      command: dpkg --print-architecture
+      register: dpkg_arch
+      changed_when: false
+
     - name: 添加 Docker 软件源
       apt_repository:
-        repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.cloud.tencent.com/docker-ce/linux/debian bookworm stable"
+        repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.cloud.tencent.com/docker-ce/linux/debian bookworm stable"
         filename: docker
 
     - name: 更新 apt 缓存（添加 Docker 源后）
