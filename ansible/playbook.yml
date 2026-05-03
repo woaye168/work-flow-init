@@ -47,15 +47,28 @@
       apt:
         update_cache: yes
 
-    - name: Hold openssh-server（避免升级时 SSH 断连）
+    - name: Hold openssh-server（防止其本身被升级）
       dpkg_selections:
         name: openssh-server
         selection: hold
+
+    - name: 阻止 apt 升级期间自动重启服务
+      copy:
+        dest: /usr/sbin/policy-rc.d
+        content: |
+          #!/bin/sh
+          exit 101
+        mode: '0755'
 
     - name: 升级已安装软件包
       apt:
         upgrade: yes
         dpkg_options: 'force-confdef,force-confold'
+
+    - name: 恢复服务自动重启策略
+      file:
+        path: /usr/sbin/policy-rc.d
+        state: absent
 
     - name: 解除 openssh-server hold
       dpkg_selections:
