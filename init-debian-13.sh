@@ -71,7 +71,7 @@ sudo apt update || error "apt update 失败，请检查网络连接"
 # 4. 升级已安装的软件包
 ###############################################################################
 info "Step 4: 升级已安装的软件包 (apt upgrade)..."
-sudo apt upgrade -y || error "apt upgrade 失败"
+sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" || error "apt upgrade 失败"
 
 ###############################################################################
 # 5. 安装常用工具
@@ -99,7 +99,7 @@ info "Step 5: 安装常用工具包..."
 # - fonts-noto-cjk: 中日韩字体
 # - tzdata: 时区数据
 
-sudo apt install -y \
+sudo DEBIAN_FRONTEND=noninteractive apt install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
     build-essential \
     git \
     curl \
