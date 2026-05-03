@@ -1,0 +1,201 @@
+- hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars:
+    packages:
+      - build-essential
+      - git
+      - curl
+      - wget
+      - vim
+      - nano
+      - htop
+      - tree
+      - zip
+      - unzip
+      - p7zip-full
+      - net-tools
+      - dnsutils
+      - iputils-ping
+      - socat
+      - netcat-openbsd
+      - jq
+      - zsh
+      - openssh-server
+      - webp
+      - locales
+      - fonts-noto-cjk
+      - tzdata
+      - ca-certificates
+      - gnupg
+
+  tasks:
+    - name: 备份原有软件源
+      copy:
+        src: /etc/apt/sources.list
+        dest: "/etc/apt/sources.list.bak.{{ ansible_date_time.epoch }}"
+        remote_src: yes
+      ignore_errors: yes
+
+    - name: 配置腾讯云镜像源
+      copy:
+        src: files/apt-sources.list
+        dest: /etc/apt/sources.list
+
+    - name: 更新软件包列表
+      apt:
+        update_cache: yes
+
+    - name: 升级已安装软件包
+      apt:
+        upgrade: yes
+        dpkg_options: 'force-confdef,force-confold'
+
+    - name: 安装常用工具
+      apt:
+        name: "{{ packages }}"
+        state: present
+
+    - name: 启用 zh_CN.UTF-8 locale
+      locale_gen:
+        name: zh_CN.UTF-8
+        state: present
+
+    - name: 启用 en_US.UTF-8 locale
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+
+    - name: 配置系统 locale
+      copy:
+        src: files/default-locale
+        dest: /etc/default/locale
+
+    - name: 配置时区
+      timezone:
+        name: Asia/Shanghai
+
+    - name: 创建 apt keyrings 目录
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: 添加 Docker GPG key
+      shell: |
+        curl -fsSL https://mirrors.cloud.tencent.com/docker-ce/linux/debian/gpg | \
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: 添加 Docker 软件源
+      apt_repository:
+        repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.cloud.tencent.com/docker-ce/linux/debian bookworm stable"
+        filename: docker
+
+    - name: 更新 apt 缓存（添加 Docker 源后）
+      apt:
+        update_cache: yes
+
+    - name: 安装 Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: 启动 Docker 服务
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: 将当前用户加入 docker 组
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+
+    - name: 创建 workspace 目录
+      file:
+        path: "{{ ansible_env.HOME }}/workspace"
+        state: directory
+
+    - name: 复制 docker-compose.yml
+      copy:
+        src: ../docker-compose.yml
+        dest: "{{ ansible_env.HOME }}/docker-compose.yml"
+
+    - name: 启动 Devbox
+      shell: docker compose up -d
+      args:
+        chdir: "{{ ansible_env.HOME }}"
+
+    - name: 安装 Oh My Zsh
+      git:
+        repo: https://github.com/ohmyzsh/ohmyzsh.git
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
+        depth: 1
+
+    - name: 安装 zsh-autosuggestions 插件
+      git:
+        repo: https://github.com/zsh-users/zsh-autosuggestions.git
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+        depth: 1
+
+    - name: 安装 zsh-syntax-highlighting 插件
+      git:
+        repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+        depth: 1
+
+    - name: 配置 .zshrc
+      copy:
+        src: files/zshrc
+        dest: "{{ ansible_env.HOME }}/.zshrc"
+
+    - name: 获取 zsh 路径
+      command: which zsh
+      register: zsh_path
+      changed_when: false
+
+    - name: 切换默认 shell 为 zsh
+      user:
+        name: "{{ ansible_env.HOME | basename }}"
+        shell: "{{ zsh_path.stdout }}"
+
+    - name: 验证 locale
+      command: locale
+      register: locale_output
+      changed_when: false
+
+    - name: 验证时区
+      command: timedatectl
+      register: timezone_output
+      changed_when: false
+
+    - name: 验证 Docker
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: 验证 Devbox
+      shell: docker ps --format '{{ .Names }}' | grep -q '^devbox$'
+      register: devbox_running
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 显示验证结果
+      debug:
+        msg:
+          - "Shell: {{ zsh_path.stdout }}"
+          - "Locale: {{ locale_output.stdout_lines | select('search', 'LANG=') | first | default('未获取') }}"
+          - "时区: {{ timezone_output.stdout_lines | select('search', 'Time zone') | first | default('未获取') }}"
+          - "Docker: {{ docker_version.stdout }}"
+          - "Devbox: {{ '运行中' if devbox_running.rc == 0 else '未启动' }}"
+          - ""
+          - "初始化完成，请重新登录以使用 zsh + Oh My Zsh"
+          - "访问 http://{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) | default('服务器IP') }}:36000 进入 Devbox"

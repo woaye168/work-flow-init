@@ -1,0 +1,5 @@
+# Debian 13 (Trixie) 腾讯云镜像源
+deb https://mirrors.cloud.tencent.com/debian/ trixie main contrib non-free non-free-firmware
+deb https://mirrors.cloud.tencent.com/debian/ trixie-updates main contrib non-free non-free-firmware
+deb https://mirrors.cloud.tencent.com/debian/ trixie-backports main contrib non-free non-free-firmware
+deb https://mirrors.cloud.tencent.com/debian-security/ trixie-security main contrib non-free non-free-firmware
