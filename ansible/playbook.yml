@@ -28,6 +28,7 @@
       - tzdata
       - ca-certificates
       - gnupg
+      - openssh-client
 
   tasks:
     - name: 备份原有软件源
@@ -124,6 +125,33 @@
         path: "{{ ansible_env.HOME }}/workspace"
         state: directory
 
+    - name: 确保 .ssh 目录存在
+      file:
+        path: "{{ ansible_env.HOME }}/.ssh"
+        state: directory
+        mode: '0700'
+
+    - name: 生成 SSH key（如不存在）
+      command: ssh-keygen -t ed25519 -f "{{ ansible_env.HOME }}/.ssh/id_ed25519" -N "" -C "devbox@{{ ansible_hostname }}"
+      args:
+        creates: "{{ ansible_env.HOME }}/.ssh/id_ed25519"
+
+    - name: 添加公钥到 authorized_keys
+      authorized_key:
+        user: "{{ ansible_user_id }}"
+        key: "{{ lookup('file', ansible_env.HOME + '/.ssh/id_ed25519.pub') }}"
+        state: present
+
+    - name: 设置 SSH 文件权限
+      file:
+        path: "{{ item.path }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ ansible_env.HOME }}/.ssh", mode: '0700' }
+        - { path: "{{ ansible_env.HOME }}/.ssh/id_ed25519", mode: '0600' }
+        - { path: "{{ ansible_env.HOME }}/.ssh/id_ed25519.pub", mode: '0644' }
+        - { path: "{{ ansible_env.HOME }}/.ssh/authorized_keys", mode: '0644' }
+
     - name: 启动 Devbox
       shell: docker compose -f "{{ playbook_dir }}/../docker-compose.yml" up -d
 
@@ -190,5 +218,25 @@
           - "Docker: {{ docker_version.stdout }}"
           - "Devbox: {{ '运行中' if devbox_running.rc == 0 else '未启动' }}"
           - ""
-          - "初始化完成，请重新登录以使用 zsh + Oh My Zsh"
-          - "访问 http://{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) | default('服务器IP') }}:36000 进入 Devbox"
+          - "========================================"
+          - "  初始化完成"
+          - "========================================"
+          - ""
+          - "【SSH 连接容器开发指南】"
+          - ""
+          - "Step 1: 下载私钥到本地电脑"
+          - "   scp root@{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) | default('服务器IP') }}:/root/.ssh/id_ed25519 ~/.ssh/devbox_key"
+          - "   chmod 600 ~/.ssh/devbox_key"
+          - ""
+          - "Step 2: 在 IDE 中配置 SSH 连接"
+          - "   Host: {{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) | default('服务器IP') }}"
+          - "   Port: 36000"
+          - "   User: root"
+          - "   Auth: SSH Key -> ~/.ssh/devbox_key"
+          - ""
+          - "支持的 IDE: Codebuddy / VSCode (Remote-SSH) / JetBrains Gateway"
+          - ""
+          - "========================================"
+          - ""
+          - "提示: 重新登录 SSH 以使用 zsh + Oh My Zsh"
+          - "      容器内环境崩溃只需 docker compose restart devbox 即可恢复"
