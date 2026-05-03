@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     volumes:
       - /root/.ssh:/tmp/host-ssh:ro
-      - ./workspace:/workspace
+      - /root/workspace:/workspace
     ports:
       - 36000:36000
     tty: true
