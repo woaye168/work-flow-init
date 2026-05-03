@@ -124,15 +124,8 @@
         path: "{{ ansible_env.HOME }}/workspace"
         state: directory
 
-    - name: 复制 docker-compose.yml
-      copy:
-        src: ../docker-compose.yml
-        dest: "{{ ansible_env.HOME }}/docker-compose.yml"
-
     - name: 启动 Devbox
-      shell: docker compose up -d
-      args:
-        chdir: "{{ ansible_env.HOME }}"
+      shell: docker compose -f "{{ playbook_dir }}/../docker-compose.yml" up -d
 
     - name: 安装 Oh My Zsh
       git:
@@ -164,7 +157,7 @@
 
     - name: 切换默认 shell 为 zsh
       user:
-        name: "{{ ansible_env.HOME | basename }}"
+        name: "{{ ansible_user_id }}"
         shell: "{{ zsh_path.stdout }}"
 
     - name: 验证 locale
