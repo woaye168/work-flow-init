@@ -65,7 +65,30 @@ sudo systemctl enable docker
 sudo usermod -aG docker "$USER" || true
 
 ###############################################################################
-# 5. 配置中文 locale 和时区
+# 5. 创建并启动 Devbox 开发环境
+###############################################################################
+info "创建 Devbox 开发环境..."
+mkdir -p ~/workspace
+cat > ~/docker-compose.yml <<'COMPOSE'
+# docker-compose.yml
+services:
+  devbox:
+    image: docker.cnb.cool/mintimate/code-nest/cloud-base-devbox/all-in-one:latest
+    container_name: devbox
+    restart: unless-stopped
+    volumes:
+      - /root/.ssh:/tmp/host-ssh:ro
+      - ./workspace:/workspace
+    ports:
+      - 36000:36000
+    tty: true
+    stdin_open: true
+COMPOSE
+
+cd ~ && docker compose up -d || warn "Devbox 启动失败"
+
+###############################################################################
+# 6. 配置中文 locale 和时区
 ###############################################################################
 info "配置中文 locale..."
 sudo sed -i 's/# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen
